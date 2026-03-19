@@ -1,0 +1,47 @@
+@page "/substrate"
+@using Microsoft.AspNetCore.Components.Web
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Substrate chart</PageTitle>
+
+<div class="substrate-interop-page px-2 px-md-3 py-3">
+    <p class="substrate-intro small mb-2">
+        <strong>Kartsen</strong> — olive-themed tabs: <em>Kartsen Test Measurement</em> for data entry;
+        <em>Kartsen Test Diagram</em> renders Highcharts when you switch to it (no generate button).
+    </p>
+    <div id="substrate-app-host"></div>
+</div>
+
+@code {
+    private bool _mounted;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _mounted)
+            return;
+
+        try
+        {
+            await JS.InvokeVoidAsync("substrateApp.mount", "substrate-app-host");
+            _mounted = true;
+        }
+        catch (JSException)
+        {
+            /* Surface in browser console; host stays empty */
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("substrateApp.unmount");
+        }
+        catch
+        {
+            /* circuit gone */
+        }
+    }
+}
