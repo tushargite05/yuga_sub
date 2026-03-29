@@ -42,14 +42,22 @@
 
       const categories = payload.categories || [];
       const values = (payload.values || []).map((v) => Number(v));
+      const deviations = (payload.deviations || []).map((v) => Number(v));
       const title = payload.title || "Substrate";
       const subtitle = payload.subtitle || "";
+
+      const errorData = values.map((avg, i) => {
+        const dev = deviations[i] || 0;
+        return [+(avg - dev).toFixed(6), +(avg + dev).toFixed(6)];
+      });
+
+      const showLabels = values.length > 0 && values.length <= 12;
 
       const options = {
         chart: {
           type: "column",
           backgroundColor: THEME.chartBg,
-          height: 400,
+          height: 460,
           style: { fontFamily: "'Segoe UI', 'Lucida Grande', Arial, sans-serif" },
         },
         title: {
@@ -67,7 +75,7 @@
         yAxis: {
           min: 0,
           title: {
-            text: "Average volume (ml)",
+            text: "Volume (ml)",
             style: { color: THEME.muted, fontWeight: "600" },
           },
           gridLineColor: THEME.grid,
@@ -77,12 +85,14 @@
         },
         legend: { enabled: false },
         tooltip: {
-          backgroundColor: "rgba(244,247,236,0.95)",
+          backgroundColor: "rgba(244,247,236,0.97)",
           borderColor: THEME.axisLine,
-          style: { color: THEME.text },
-          headerFormat: "<b>{point.key}</b><br/>",
-          pointFormat:
-            "Average: <b>{point.y:.2f}</b> ml<br/><span style=\"font-size:11px;opacity:0.85\">(mean of measurement 1 & 2)</span>",
+          borderRadius: 6,
+          borderWidth: 1,
+          shadow: true,
+          padding: 10,
+          useHTML: true,
+          style: { color: THEME.text, fontSize: "13px" },
         },
         plotOptions: {
           column: {
@@ -90,16 +100,13 @@
             pointPadding: 0.15,
             groupPadding: 0.12,
             borderWidth: 0,
-            dataLabels: {
-              enabled: values.length > 0 && values.length <= 12,
-              format: "{y:.2f}",
-              style: {
-                fontWeight: "700",
-                fontSize: "11px",
-                color: THEME.dataLabel,
-                textOutline: "1px contrast",
-              },
-            },
+            dataLabels: { enabled: false },
+          },
+          errorbar: {
+            whiskerLength: "60%",
+            stemWidth: 2,
+            whiskerWidth: 2,
+            dataLabels: { enabled: false },
           },
           series: {
             animation: { duration: 450 },
@@ -108,6 +115,7 @@
         series: [
           {
             name: "Average (ml)",
+            type: "column",
             data: values,
             color: {
               linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
@@ -115,6 +123,31 @@
                 [0, THEME.barTop],
                 [1, THEME.barBottom],
               ],
+            },
+            tooltip: {
+              headerFormat: "<b>{point.key}</b><br/>",
+              pointFormatter: function () {
+                return (
+                  "<span style='color:" + THEME.muted + "'>Average</span>: " +
+                  "<b>" + this.y.toFixed(2) + " ml</b>"
+                );
+              },
+            },
+          },
+          {
+            name: "Deviation",
+            type: "errorbar",
+            data: errorData,
+            color: THEME.axisLine,
+            tooltip: {
+              headerFormat: "<b>{point.key}</b><br/>",
+              pointFormatter: function () {
+                const dev = deviations[this.index];
+                return (
+                  "<span style='color:" + THEME.muted + "'>Deviation</span>: " +
+                  "<b>±" + dev.toFixed(2) + " ml</b>"
+                );
+              },
             },
           },
         ],

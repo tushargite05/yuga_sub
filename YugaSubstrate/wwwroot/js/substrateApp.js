@@ -76,6 +76,7 @@
     const name = (nameInput.value || "").trim();
     const categories = [];
     const values = [];
+    const deviations = [];
 
     for (const w of WINDOWS) {
       const cb = hostEl.querySelector("#cb-" + w.id);
@@ -92,8 +93,12 @@
         );
       }
 
+      const avg = (m1 + m2) / 2;
+      const dev = Math.abs(m1 - m2) / 2;
+
       categories.push(w.label);
-      values.push((m1 + m2) / 2);
+      values.push(avg);
+      deviations.push(dev);
     }
 
     if (categories.length === 0) {
@@ -105,12 +110,12 @@
     return {
       title:
         name.length > 0
-          ? name + " — average of two measurements (ml)"
-          : "Substrate — average of two measurements (ml)",
-      subtitle:
-        "One bar per selected window: (measurement 1 + measurement 2) ÷ 2",
+          ? name + " — measurements"
+          : "Substrate — measurements",
+      subtitle: "Bar height: average (m1+m2)÷2 | Error lines: ± deviation",
       categories,
       values,
+      deviations,
     };
   }
 
